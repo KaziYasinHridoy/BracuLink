@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎓 Bracu Link
+# 🎓 BracuLink
 
 ### Connecting BRAC University Students Through One Smart Platform
 
@@ -19,7 +19,7 @@
 
 # 📖 Overview
 
-Bracu Link is an independent student-developed platform designed to improve communication, collaboration, and campus life at BRAC University.
+BracuLink is an independent student-developed platform designed to improve communication, collaboration, and campus life at BRAC University.
 
 The platform combines social networking with academic tools, allowing students to connect with classmates, communicate in real time, organize study activities, exchange course sections, share schedules, and discover campus opportunities—all within a secure university community.
 
@@ -170,7 +170,7 @@ If you have suggestions or ideas, feel free to open an Issue.
 
 # ⚠ Disclaimer
 
-Bracu Link is an independent student-developed project.
+BracuLink is an independent student-developed project.
 
 It is **not affiliated with, endorsed by, or officially associated with BRAC University.**
 
