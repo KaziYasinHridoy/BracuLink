@@ -33,6 +33,7 @@ public class RoutineEntryRowMapper implements RowMapper<RoutineEntryDto> {
         boolean hasLab = rs.getObject("lab_section_id") != null;
         dto.setHasLab(hasLab);
         dto.setLabFaculties(hasLab ? rs.getString("lab_faculties") : null);
+        dto.setLabRoomName(hasLab ? rs.getString("lab_room_name") : null);
         dto.setLabSchedules(hasLab ? readSchedules(rs.getString("lab_schedules")) : null);
 
         dto.setSemesterSessionId(rs.getInt("semester_session_id"));

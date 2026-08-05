@@ -19,6 +19,7 @@ public class CourseSection {
     private List<ClassSlot> classSchedules;
     private Long labSectionId;
     private String labFaculties;
+    private String labRoomName;
     private List<ClassSlot> labSchedules;
     private LocalDateTime lastSyncedAt;
 
@@ -132,6 +133,14 @@ public class CourseSection {
 
     public void setLabFaculties(String labFaculties) {
         this.labFaculties = labFaculties;
+    }
+
+    public String getLabRoomName() {
+        return labRoomName;
+    }
+
+    public void setLabRoomName(String labRoomName) {
+        this.labRoomName = labRoomName;
     }
 
     public List<ClassSlot> getLabSchedules() {

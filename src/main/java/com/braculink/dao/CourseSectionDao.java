@@ -35,8 +35,8 @@ public class CourseSectionDao {
     private static final String UPSERT_SQL = "INSERT INTO course_section "
             + "(section_id, course_code, course_name, course_type, section_name, faculties, room_name, "
             + "capacity, consumed_seat, semester_session_id, class_schedules, lab_section_id, lab_faculties, "
-            + "lab_schedules, last_synced_at) "
-            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+            + "lab_room_name, lab_schedules, last_synced_at) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
             + "ON DUPLICATE KEY UPDATE "
             + "course_code = VALUES(course_code), "
             + "course_name = VALUES(course_name), "
@@ -49,6 +49,7 @@ public class CourseSectionDao {
             + "class_schedules = VALUES(class_schedules), "
             + "lab_section_id = VALUES(lab_section_id), "
             + "lab_faculties = VALUES(lab_faculties), "
+            + "lab_room_name = VALUES(lab_room_name), "
             + "lab_schedules = VALUES(lab_schedules), "
             + "last_synced_at = VALUES(last_synced_at)";
 
@@ -105,6 +106,7 @@ public class CourseSectionDao {
                 writeJson(section.getClassSchedules()),
                 section.getLabSectionId(),
                 section.getLabFaculties(),
+                section.getLabRoomName(),
                 writeJson(section.getLabSchedules()),
                 Timestamp.valueOf(section.getLastSyncedAt())
         };

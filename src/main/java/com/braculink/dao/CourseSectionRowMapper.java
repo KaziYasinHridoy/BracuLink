@@ -37,6 +37,7 @@ public class CourseSectionRowMapper implements RowMapper<CourseSection> {
         section.setClassSchedules(readSchedules(rs.getString("class_schedules")));
         section.setLabSectionId((Long) rs.getObject("lab_section_id"));
         section.setLabFaculties(rs.getString("lab_faculties"));
+        section.setLabRoomName(rs.getString("lab_room_name"));
         section.setLabSchedules(readSchedules(rs.getString("lab_schedules")));
         Timestamp lastSyncedAt = rs.getTimestamp("last_synced_at");
         section.setLastSyncedAt(lastSyncedAt != null ? lastSyncedAt.toLocalDateTime() : null);

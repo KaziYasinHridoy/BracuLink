@@ -15,6 +15,7 @@ public class RoutineEntryDto {
     private List<ClassSlot> classSchedules;
     private boolean hasLab;
     private String labFaculties;
+    private String labRoomName;
     private List<ClassSlot> labSchedules;
     private Integer semesterSessionId;
 
@@ -88,6 +89,14 @@ public class RoutineEntryDto {
 
     public void setLabFaculties(String labFaculties) {
         this.labFaculties = labFaculties;
+    }
+
+    public String getLabRoomName() {
+        return labRoomName;
+    }
+
+    public void setLabRoomName(String labRoomName) {
+        this.labRoomName = labRoomName;
     }
 
     public List<ClassSlot> getLabSchedules() {

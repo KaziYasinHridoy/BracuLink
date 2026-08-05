@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS course_section (
     class_schedules      JSON,
     lab_section_id       BIGINT,
     lab_faculties        VARCHAR(100),
+    lab_room_name        VARCHAR(100),
     lab_schedules        JSON,
     last_synced_at       DATETIME,
     UNIQUE KEY uq_section_semester (section_id, semester_session_id),

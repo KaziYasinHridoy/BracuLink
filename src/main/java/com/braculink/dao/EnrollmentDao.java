@@ -20,7 +20,7 @@ public class EnrollmentDao {
 
     private static final String FIND_BY_USER_AND_SEMESTER_SQL = "SELECT e.id AS enrollment_id, e.semester_session_id, "
             + "cs.course_code, cs.course_name, cs.section_name, cs.faculties, cs.room_name, "
-            + "cs.class_schedules, cs.lab_section_id, cs.lab_faculties, cs.lab_schedules "
+            + "cs.class_schedules, cs.lab_section_id, cs.lab_faculties, cs.lab_room_name, cs.lab_schedules "
             + "FROM enrollment e "
             + "JOIN course_section cs ON cs.id = e.section_id "
             + "WHERE e.user_id = ? AND e.semester_session_id = ? "

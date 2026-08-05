@@ -19,6 +19,7 @@ public class ConnectJsonSectionDto {
     private SectionScheduleDto sectionSchedule;
     private Long labSectionId;
     private String labFaculties;
+    private String labRoomName;
     private List<ClassSlot> labSchedules;
 
     public Long getSectionId() {
@@ -123,6 +124,14 @@ public class ConnectJsonSectionDto {
 
     public void setLabFaculties(String labFaculties) {
         this.labFaculties = labFaculties;
+    }
+
+    public String getLabRoomName() {
+        return labRoomName;
+    }
+
+    public void setLabRoomName(String labRoomName) {
+        this.labRoomName = labRoomName;
     }
 
     public List<ClassSlot> getLabSchedules() {

@@ -45,6 +45,7 @@ public class CourseSyncService {
         section.setClassSchedules(dto.getSectionSchedule() != null ? dto.getSectionSchedule().getClassSchedules() : null);
         section.setLabSectionId(dto.getLabSectionId());
         section.setLabFaculties(dto.getLabFaculties());
+        section.setLabRoomName(dto.getLabRoomName());
         section.setLabSchedules(dto.getLabSchedules());
         section.setLastSyncedAt(syncedAt);
         return section;
