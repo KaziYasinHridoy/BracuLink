@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class CourseSectionDao {
@@ -25,6 +26,11 @@ public class CourseSectionDao {
             + "FROM course_section "
             + "WHERE course_code LIKE ? OR course_name LIKE ? "
             + "ORDER BY course_code";
+
+    private static final String FIND_THEORY_SECTION_ID_SQL = "SELECT id FROM course_section "
+            + "WHERE course_code = ? AND section_name = ? AND semester_session_id = ? AND course_type = 'THEORY'";
+
+    private static final String FIND_CURRENT_SEMESTER_SQL = "SELECT MAX(semester_session_id) FROM course_section";
 
     private static final String UPSERT_SQL = "INSERT INTO course_section "
             + "(section_id, course_code, course_name, course_type, section_name, faculties, room_name, "
@@ -71,6 +77,17 @@ public class CourseSectionDao {
         return jdbcTemplate.query(SEARCH_COURSES_SQL,
                 (rs, rowNum) -> new CourseSummaryDto(rs.getString("course_code"), rs.getString("course_name")),
                 pattern, pattern);
+    }
+
+    public Optional<Long> findTheorySectionId(String courseCode, String sectionName, Integer semesterSessionId) {
+        List<Long> ids = jdbcTemplate.query(FIND_THEORY_SECTION_ID_SQL,
+                (rs, rowNum) -> rs.getLong("id"), courseCode, sectionName, semesterSessionId);
+        return ids.stream().findFirst();
+    }
+
+    public Optional<Integer> findCurrentSemesterSessionId() {
+        Integer result = jdbcTemplate.queryForObject(FIND_CURRENT_SEMESTER_SQL, Integer.class);
+        return Optional.ofNullable(result);
     }
 
     private Object[] toRow(CourseSection section) {
