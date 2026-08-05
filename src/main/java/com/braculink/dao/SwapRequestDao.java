@@ -1,5 +1,6 @@
 package com.braculink.dao;
 
+import com.braculink.dto.SwapGroupMemberDto;
 import com.braculink.dto.SwapRequestResponse;
 import com.braculink.model.SwapRequest;
 import com.braculink.swap.engine.SwapRequestView;
@@ -13,6 +14,7 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -63,6 +65,43 @@ public class SwapRequestDao {
 
     private static final String EXISTS_ACTIVE_FOR_USER_AND_COURSE_SQL = "SELECT COUNT(*) FROM swap_request "
             + "WHERE user_id = ? AND course_code = ? AND status IN ('PENDING', 'RESERVED')";
+
+    private static final String FIND_BY_GROUP_SQL = "SELECT " + COLUMNS + " FROM swap_request "
+            + "WHERE group_id = ? ORDER BY id";
+
+    // The concurrency guard for the propose flow. The AND status = 'PENDING' means a request that
+    // someone else reserved a moment ago simply will not match, so the affected-row count comes
+    // back short and the caller rolls the whole proposal back.
+    private static final String RESERVE_SQL = "UPDATE swap_request "
+            + "SET status = 'RESERVED', group_id = ?, confirmed = FALSE, responded_at = NULL "
+            + "WHERE status = 'PENDING' AND id IN ";
+
+    private static final String CONFIRM_MEMBER_SQL = "UPDATE swap_request "
+            + "SET confirmed = TRUE, responded_at = ? "
+            + "WHERE group_id = ? AND user_id = ? AND status = 'RESERVED' AND confirmed = FALSE";
+
+    private static final String COUNT_UNCONFIRMED_IN_GROUP_SQL = "SELECT COUNT(*) FROM swap_request "
+            + "WHERE group_id = ? AND confirmed = FALSE";
+
+    private static final String MARK_MATCHED_BY_GROUP_SQL = "UPDATE swap_request "
+            + "SET status = 'MATCHED', responded_at = ? WHERE group_id = ? AND status = 'RESERVED'";
+
+    // Releasing clears group_id, so a released request is indistinguishable from one that never
+    // joined a group — which is exactly what "back in the pool" means.
+    private static final String RELEASE_GROUP_SQL = "UPDATE swap_request "
+            + "SET status = 'PENDING', group_id = NULL, confirmed = FALSE, responded_at = NULL "
+            + "WHERE group_id = ? AND status = 'RESERVED'";
+
+    private static final String FIND_MEMBERS_BY_GROUPS_SQL = "SELECT sr.group_id, sr.user_id, sr.confirmed, "
+            + "u.full_name, u.student_id, u.fb_profile_url, u.phone_number, u.phone_public, "
+            + "cur.section_name AS current_section_name, des.section_name AS desired_section_name "
+            + "FROM swap_request sr "
+            + "JOIN user u ON u.id = sr.user_id "
+            + "JOIN course_section cur ON cur.id = sr.current_section_id "
+            + "JOIN course_section des ON des.id = sr.desired_section_id "
+            + "WHERE sr.group_id IN ";
+
+    private static final SwapGroupMemberExtractor MEMBER_EXTRACTOR = new SwapGroupMemberExtractor();
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -118,5 +157,79 @@ public class SwapRequestDao {
         Integer count = jdbcTemplate.queryForObject(EXISTS_ACTIVE_FOR_USER_AND_COURSE_SQL, Integer.class,
                 userId, courseCode);
         return count != null && count > 0;
+    }
+
+    public List<SwapRequest> findAllByIds(List<Long> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        String sql = "SELECT " + COLUMNS + " FROM swap_request WHERE id IN " + placeholders(ids.size())
+                + " ORDER BY id";
+        return jdbcTemplate.query(sql, ROW_MAPPER, ids.toArray());
+    }
+
+    public List<SwapRequest> findByGroup(Long groupId) {
+        return jdbcTemplate.query(FIND_BY_GROUP_SQL, ROW_MAPPER, groupId);
+    }
+
+    /**
+     * Reserves every listed request for a group, but only those still PENDING.
+     *
+     * @return how many rows were actually reserved. The caller must compare this against the
+     *         intended group size and roll back if it falls short — that comparison is the whole
+     *         concurrency guard against two students proposing overlapping groups at once.
+     */
+    public int reserveAll(List<Long> ids, Long groupId) {
+        if (ids.isEmpty()) {
+            return 0;
+        }
+        Object[] args = new Object[ids.size() + 1];
+        args[0] = groupId;
+        for (int i = 0; i < ids.size(); i++) {
+            args[i + 1] = ids.get(i);
+        }
+        return jdbcTemplate.update(RESERVE_SQL + placeholders(ids.size()), args);
+    }
+
+    public int confirmMember(Long groupId, Long userId) {
+        return jdbcTemplate.update(CONFIRM_MEMBER_SQL, Timestamp.valueOf(LocalDateTime.now()), groupId, userId);
+    }
+
+    public int countUnconfirmedInGroup(Long groupId) {
+        Integer count = jdbcTemplate.queryForObject(COUNT_UNCONFIRMED_IN_GROUP_SQL, Integer.class, groupId);
+        return count == null ? 0 : count;
+    }
+
+    public int markMatchedByGroup(Long groupId) {
+        return jdbcTemplate.update(MARK_MATCHED_BY_GROUP_SQL, Timestamp.valueOf(LocalDateTime.now()), groupId);
+    }
+
+    public int releaseGroup(Long groupId) {
+        return jdbcTemplate.update(RELEASE_GROUP_SQL, groupId);
+    }
+
+    public Map<Long, List<SwapGroupMemberDto>> findMembersByGroupIds(List<Long> groupIds) {
+        if (groupIds.isEmpty()) {
+            return Map.of();
+        }
+        String sql = FIND_MEMBERS_BY_GROUPS_SQL + placeholders(groupIds.size()) + " ORDER BY sr.group_id, sr.id";
+        Map<Long, List<SwapGroupMemberDto>> members =
+                jdbcTemplate.query(sql, MEMBER_EXTRACTOR, groupIds.toArray());
+        return members == null ? Map.of() : members;
+    }
+
+    /**
+     * Builds an {@code (?, ?, ?)} list for an IN clause.
+     *
+     * <p>Only the <em>count</em> of placeholders varies — no caller-supplied value is ever
+     * concatenated into the SQL. Every actual value still travels as a bound parameter, so this
+     * stays within the project's rule that user input never reaches the statement text.
+     */
+    private static String placeholders(int count) {
+        StringBuilder sql = new StringBuilder("(");
+        for (int i = 0; i < count; i++) {
+            sql.append(i == 0 ? "?" : ", ?");
+        }
+        return sql.append(')').toString();
     }
 }
