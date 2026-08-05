@@ -19,28 +19,35 @@
 
 # 📖 Overview
 
-Bracu Link is an independent student-developed platform designed to improve communication, collaboration, and campus life at BRAC University.
+Bracu Link is an independent student-developed platform designed to improve communication, collaboration, and campus
+life at BRAC University.
 
-The platform combines social networking with academic tools, allowing students to connect with classmates, communicate in real time, organize study activities, exchange course sections, share schedules, and discover campus opportunities—all within a secure university community.
+The platform combines social networking with academic tools, allowing students to connect with classmates, communicate
+in real time, organize study activities, exchange course sections, share schedules, and discover campus
+opportunities—all within a secure university community.
 
-The long-term vision is to create a single digital ecosystem that simplifies everyday student life while leveraging AI to provide personalized academic assistance.
+The long-term vision is to create a single digital ecosystem that simplifies everyday student life while leveraging AI
+to provide personalized academic assistance.
 
 ---
 
 # ✨ Features
 
 ### 👥 Student Networking
+
 - Student profiles
 - Friend system
 - Student search
 - Academic networking
 
 ### 💬 Communication
+
 - Real-time messaging
 - Group conversations
 - Notifications
 
 ### 📅 Academic Collaboration
+
 - View class schedules
 - Share available/free time
 - Course section exchange
@@ -48,12 +55,14 @@ The long-term vision is to create a single digital ecosystem that simplifies eve
 - Share academic resources
 
 ### 🏫 Campus Life
+
 - Club discovery
 - Event management
 - Lost & Found
 - Student marketplace
 
 ### 🤖 AI (Planned)
+
 - AI Study Assistant
 - Smart timetable recommendations
 - Course recommendations
@@ -125,7 +134,8 @@ BracuLink/
 
 # 🚀 Vision
 
-To build the most comprehensive digital platform for BRAC University students by bringing communication, collaboration, academics, and campus life together in one application.
+To build the most comprehensive digital platform for BRAC University students by bringing communication, collaboration,
+academics, and campus life together in one application.
 
 ---
 
@@ -184,7 +194,8 @@ All Rights Reserved.
 
 This repository is publicly available for viewing and educational purposes only.
 
-No permission is granted to copy, modify, distribute, sublicense, or use this source code, in whole or in part, without prior written permission from the copyright holder.
+No permission is granted to copy, modify, distribute, sublicense, or use this source code, in whole or in part, without
+prior written permission from the copyright holder.
 
 ---
 
