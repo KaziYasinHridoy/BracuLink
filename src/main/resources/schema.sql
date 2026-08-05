@@ -67,7 +67,9 @@ CREATE TABLE IF NOT EXISTS swap_request (
     FOREIGN KEY (user_id) REFERENCES user(id),
     FOREIGN KEY (current_section_id) REFERENCES course_section(id),
     FOREIGN KEY (desired_section_id) REFERENCES course_section(id),
-    FOREIGN KEY (group_id) REFERENCES swap_group(id)
+    FOREIGN KEY (group_id) REFERENCES swap_group(id),
+    -- The matching engine loads one course's active requests on every suggestion lookup.
+    INDEX idx_swap_course_status (course_code, status)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS notification (

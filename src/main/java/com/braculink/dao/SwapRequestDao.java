@@ -2,6 +2,7 @@ package com.braculink.dao;
 
 import com.braculink.dto.SwapRequestResponse;
 import com.braculink.model.SwapRequest;
+import com.braculink.swap.engine.SwapRequestView;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -18,6 +19,8 @@ import java.util.Optional;
 public class SwapRequestDao {
 
     private static final SwapRequestRowMapper ROW_MAPPER = new SwapRequestRowMapper();
+
+    private static final SwapRequestViewRowMapper VIEW_ROW_MAPPER = new SwapRequestViewRowMapper();
 
     private static final String COLUMNS = "id, user_id, course_code, current_section_id, desired_section_id, "
             + "status, confirmed, group_id, created_at, responded_at";
@@ -37,9 +40,21 @@ public class SwapRequestDao {
             + "WHERE sr.user_id = ? "
             + "ORDER BY sr.created_at DESC";
 
-    private static final String FIND_PENDING_BY_COURSE_SQL = "SELECT " + COLUMNS + " FROM swap_request "
-            + "WHERE course_code = ? AND status = 'PENDING' "
-            + "ORDER BY created_at";
+    // Feeds the matching engine. One JOIN instead of an N+1: the engine is pure in-memory Java and
+    // cannot look anything up, so the names it needs for a suggestion payload must arrive with the
+    // rows. RESERVED is loaded alongside PENDING so SwapGraph's status filter stays load-bearing in
+    // production rather than being dead code only the tests exercise.
+    private static final String FIND_ACTIVE_VIEWS_BY_COURSE_SQL = "SELECT sr.id, sr.user_id, "
+            + "u.full_name, u.student_id, sr.course_code, "
+            + "sr.current_section_id, cur.section_name AS current_section_name, "
+            + "sr.desired_section_id, des.section_name AS desired_section_name, "
+            + "sr.status, sr.created_at "
+            + "FROM swap_request sr "
+            + "JOIN user u ON u.id = sr.user_id "
+            + "JOIN course_section cur ON cur.id = sr.current_section_id "
+            + "JOIN course_section des ON des.id = sr.desired_section_id "
+            + "WHERE sr.course_code = ? AND sr.status IN ('PENDING', 'RESERVED') "
+            + "ORDER BY sr.created_at, sr.id";
 
     private static final String UPDATE_STATUS_SQL = "UPDATE swap_request SET status = ? WHERE id = ?";
 
@@ -87,8 +102,8 @@ public class SwapRequestDao {
         ), userId);
     }
 
-    public List<SwapRequest> findPendingByCourse(String courseCode) {
-        return jdbcTemplate.query(FIND_PENDING_BY_COURSE_SQL, ROW_MAPPER, courseCode);
+    public List<SwapRequestView> findActiveViewsByCourse(String courseCode) {
+        return jdbcTemplate.query(FIND_ACTIVE_VIEWS_BY_COURSE_SQL, VIEW_ROW_MAPPER, courseCode);
     }
 
     public int updateStatus(Long id, String status) {

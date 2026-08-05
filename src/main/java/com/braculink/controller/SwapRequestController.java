@@ -3,8 +3,10 @@ package com.braculink.controller;
 import com.braculink.common.ApiResponse;
 import com.braculink.dto.SwapRequestCreateDto;
 import com.braculink.dto.SwapRequestResponse;
+import com.braculink.dto.SwapSuggestionDto;
 import com.braculink.security.CurrentUser;
 import com.braculink.service.SwapRequestService;
+import com.braculink.service.SwapSuggestionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +25,12 @@ import java.util.List;
 public class SwapRequestController {
 
     private final SwapRequestService swapRequestService;
+    private final SwapSuggestionService swapSuggestionService;
 
-    public SwapRequestController(SwapRequestService swapRequestService) {
+    public SwapRequestController(SwapRequestService swapRequestService,
+            SwapSuggestionService swapSuggestionService) {
         this.swapRequestService = swapRequestService;
+        this.swapSuggestionService = swapSuggestionService;
     }
 
     @PostMapping
@@ -37,6 +42,12 @@ public class SwapRequestController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<List<SwapRequestResponse>>> getMyRequests() {
         return ResponseEntity.ok(ApiResponse.success(swapRequestService.getMyRequests(CurrentUser.id())));
+    }
+
+    @GetMapping("/{id}/suggestions")
+    public ResponseEntity<ApiResponse<List<SwapSuggestionDto>>> getSuggestions(@PathVariable Long id) {
+        List<SwapSuggestionDto> suggestions = swapSuggestionService.getSuggestions(id, CurrentUser.id());
+        return ResponseEntity.ok(ApiResponse.success(suggestions));
     }
 
     @DeleteMapping("/{id}")
