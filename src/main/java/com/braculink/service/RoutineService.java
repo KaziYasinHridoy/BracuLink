@@ -52,7 +52,7 @@ public class RoutineService {
                 .toList();
     }
 
-    public List<RoutineRowDto> buildMyWeeklyRoutine(Long userId) {
+    public List<RoutineRowDto> buildWeeklyRoutineForCurrentSemester(Long userId) {
         return buildWeeklyRoutine(userId, currentSemesterSessionId());
     }
 

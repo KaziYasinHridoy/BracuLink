@@ -24,7 +24,7 @@ public class RoutineController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<List<RoutineRowDto>>> getMyRoutine() {
-        List<RoutineRowDto> routine = routineService.buildMyWeeklyRoutine(CurrentUser.id());
+        List<RoutineRowDto> routine = routineService.buildWeeklyRoutineForCurrentSemester(CurrentUser.id());
         return ResponseEntity.ok(ApiResponse.success(routine));
     }
 

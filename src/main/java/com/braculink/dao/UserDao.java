@@ -75,4 +75,9 @@ public class UserDao {
         String sql = "UPDATE user SET email_verified = TRUE WHERE id = ?";
         jdbcTemplate.update(sql, id);
     }
+
+    public void updateProfile(Long id, String phoneNumber, boolean phonePublic, String fbProfileUrl) {
+        String sql = "UPDATE user SET phone_number = ?, phone_public = ?, fb_profile_url = ? WHERE id = ?";
+        jdbcTemplate.update(sql, phoneNumber, phonePublic, fbProfileUrl, id);
+    }
 }
