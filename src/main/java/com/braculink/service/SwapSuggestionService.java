@@ -57,6 +57,6 @@ public class SwapSuggestionService {
         }
 
         SwapGraph graph = SwapGraph.build(request.getCourseCode(), views);
-        return cycleMatchingService.findCandidates(graph, me, CycleMatchingService.MAX_SUPPORTED_GROUP_SIZE);
+        return cycleMatchingService.findCandidates(graph, me, CycleMatchingService.DEFAULT_MAX_GROUP_SIZE);
     }
 }
