@@ -1,11 +1,11 @@
-package com.braculink.model;
+package com.braculink.dto;
 
-import java.time.LocalDateTime;
+import com.braculink.model.ClassSlot;
+
 import java.util.List;
 
-public class CourseSection {
+public class ConnectJsonSectionDto {
 
-    private Long id;
     private Long sectionId;
     private String courseCode;
     private String courseName;
@@ -16,19 +16,10 @@ public class CourseSection {
     private Integer capacity;
     private Integer consumedSeat;
     private Integer semesterSessionId;
-    private List<ClassSlot> classSchedules;
+    private SectionScheduleDto sectionSchedule;
     private Long labSectionId;
     private String labFaculties;
     private List<ClassSlot> labSchedules;
-    private LocalDateTime lastSyncedAt;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public Long getSectionId() {
         return sectionId;
@@ -110,12 +101,12 @@ public class CourseSection {
         this.semesterSessionId = semesterSessionId;
     }
 
-    public List<ClassSlot> getClassSchedules() {
-        return classSchedules;
+    public SectionScheduleDto getSectionSchedule() {
+        return sectionSchedule;
     }
 
-    public void setClassSchedules(List<ClassSlot> classSchedules) {
-        this.classSchedules = classSchedules;
+    public void setSectionSchedule(SectionScheduleDto sectionSchedule) {
+        this.sectionSchedule = sectionSchedule;
     }
 
     public Long getLabSectionId() {
@@ -140,13 +131,5 @@ public class CourseSection {
 
     public void setLabSchedules(List<ClassSlot> labSchedules) {
         this.labSchedules = labSchedules;
-    }
-
-    public LocalDateTime getLastSyncedAt() {
-        return lastSyncedAt;
-    }
-
-    public void setLastSyncedAt(LocalDateTime lastSyncedAt) {
-        this.lastSyncedAt = lastSyncedAt;
     }
 }
