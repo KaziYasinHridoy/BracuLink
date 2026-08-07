@@ -21,8 +21,6 @@ import java.time.LocalDateTime;
 @Service
 public class AuthService {
 
-    private static final int OTP_MIN = 100000;
-    private static final int OTP_RANGE = 900000;
     private static final long OTP_VALIDITY_MINUTES = 10;
 
     private final UserDao userDao;
@@ -90,8 +88,8 @@ public class AuthService {
         return new AuthResponse(token, user.getId(), user.getFullName(), user.getStudentId(), user.getBracuEmail());
     }
 
+    /** A 6-digit code, zero-padded so it is always exactly 6 characters. */
     private String generateOtp() {
-        int code = OTP_MIN + secureRandom.nextInt(OTP_RANGE);
-        return String.valueOf(code);
+        return String.format("%06d", secureRandom.nextInt(1_000_000));
     }
 }

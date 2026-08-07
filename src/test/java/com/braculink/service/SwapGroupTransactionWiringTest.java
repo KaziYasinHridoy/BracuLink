@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.AnnotationTransactionAttributeSource;
 
@@ -23,7 +25,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>Needs a running MySQL, like every {@code @SpringBootTest} in this project.
  */
 @SpringBootTest
+@ActiveProfiles("test")
 class SwapGroupTransactionWiringTest {
+
+    /** Stops the course sync scheduler making a real network call during tests. */
+    @MockitoBean
+    private CourseSyncService courseSyncService;
 
     @Autowired
     private PlatformTransactionManager transactionManager;

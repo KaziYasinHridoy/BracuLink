@@ -15,11 +15,14 @@ public class OtpDao {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    /** Stores the code for this email, replacing any earlier one (email is the primary key). */
     public void save(String email, String code, LocalDateTime expiresAt) {
-        String sql = "INSERT INTO otp (email, code, expires_at) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO otp (email, code, expires_at) VALUES (?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE code = VALUES(code), expires_at = VALUES(expires_at)";
         jdbcTemplate.update(sql, email, code, Timestamp.valueOf(expiresAt));
     }
 
+    /** True only if a row exists for this email whose code matches and has not expired. */
     public boolean isValid(String email, String code) {
         String sql = "SELECT COUNT(*) FROM otp WHERE email = ? AND code = ? AND expires_at > ?";
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, email, code, Timestamp.valueOf(LocalDateTime.now()));

@@ -93,10 +93,11 @@ CREATE TABLE IF NOT EXISTS friendship (
     FOREIGN KEY (addressee_id) REFERENCES user(id)
 ) ENGINE=InnoDB;
 
+-- Short-lived signup verification codes. One live code per email, so the email IS the
+-- primary key: issuing a new code overwrites the old one instead of piling up rows, and
+-- that is what ON DUPLICATE KEY UPDATE in OtpDao relies on. Rows are deleted on verify.
 CREATE TABLE IF NOT EXISTS otp (
-    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-    email       VARCHAR(120) NOT NULL,
-    code        VARCHAR(10) NOT NULL,
-    expires_at  DATETIME NOT NULL,
-    INDEX idx_otp_email (email)
+    email       VARCHAR(120) NOT NULL PRIMARY KEY,
+    code        VARCHAR(6) NOT NULL,
+    expires_at  DATETIME NOT NULL
 ) ENGINE=InnoDB;

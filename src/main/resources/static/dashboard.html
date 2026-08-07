@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>braculink // dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!--
+    CANONICAL NAV — copy this block verbatim into every future page.
+    Set class="active" on the <a> matching the current page.
+
+    <nav class="nav">
+      <a href="dashboard.html"><img src="assets/logo.svg" alt="braculink" height="24" /></a>
+      <div class="nav-links">
+        <a href="dashboard.html" class="active">Dashboard</a>
+        <a href="courses.html">Courses</a>
+        <a href="swap.html">Swap</a>
+        <a href="groups.html">Groups</a>
+        <a href="friends.html">Friends</a>
+        <a href="profile.html">Profile</a>
+        <div class="notif-wrap">
+          <button type="button" class="notif-bell" id="notif-bell-button" aria-label="Notifications">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            <span id="notif-count" class="notif-badge hidden">0</span>
+          </button>
+          <div id="notif-panel" class="card notif-panel hidden">
+            <p class="card-label">NOTIFICATIONS</p>
+            <div id="notif-list" class="stack stack-sm">loading…</div>
+          </div>
+        </div>
+        <button type="button" class="btn-secondary" onclick="logout()">logout</button>
+      </div>
+    </nav>
+  -->
+  <nav class="nav">
+    <a href="dashboard.html"><img src="assets/logo.svg" alt="braculink" height="24" /></a>
+    <div class="nav-links">
+      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="courses.html">Courses</a>
+      <a href="swap.html">Swap</a>
+      <a href="groups.html">Groups</a>
+      <a href="friends.html">Friends</a>
+      <a href="profile.html">Profile</a>
+      <div class="notif-wrap">
+        <button type="button" class="notif-bell" id="notif-bell-button" aria-label="Notifications">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          <span id="notif-count" class="notif-badge hidden">0</span>
+        </button>
+        <div id="notif-panel" class="card notif-panel hidden">
+          <p class="card-label">NOTIFICATIONS</p>
+          <div id="notif-list" class="stack stack-sm">loading…</div>
+        </div>
+      </div>
+      <button type="button" class="btn-secondary" onclick="logout()">logout</button>
+    </div>
+  </nav>
+
+  <div class="container stack stack-lg" style="padding-top: 32px; padding-bottom: 48px;">
+    <h1>my routine</h1>
+
+    <section class="card stack stack-md">
+      <p class="card-label">RIGHT NOW</p>
+      <div id="status-badge" class="badge muted mono" style="font-size: 16px; padding: 8px 16px;">loading…</div>
+    </section>
+
+    <section class="card stack stack-md">
+      <p class="card-label">MY ROUTINE THIS SEMESTER</p>
+      <div id="routine-wrap" class="mono muted text-sm">loading…</div>
+    </section>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/notifications.js"></script>
+  <script>
+    requireAuth();
+    initNotifications();
+
+    const DAYS = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+    const DAY_LABELS = { SUNDAY: "SUN", MONDAY: "MON", TUESDAY: "TUE", WEDNESDAY: "WED", THURSDAY: "THU", FRIDAY: "FRI", SATURDAY: "SAT" };
+
+    function renderCell(text) {
+      if (!text) {
+        return `<span class="muted">—</span>`;
+      }
+      const dashIndex = text.indexOf("-");
+      const courseCode = dashIndex === -1 ? text : text.slice(0, dashIndex);
+      const rest = dashIndex === -1 ? "" : text.slice(dashIndex + 1);
+      return `
+        <div class="mono" style="font-weight: 600; color: var(--accent);">${courseCode}</div>
+        ${rest ? `<div class="muted text-sm">${rest}</div>` : ""}
+      `;
+    }
+
+    async function loadRoutine() {
+      const wrap = document.getElementById("routine-wrap");
+      try {
+        const rows = await apiFetch("/api/routine/me");
+        if (!rows || rows.length === 0) {
+          wrap.textContent = "no classes enrolled yet";
+          return;
+        }
+
+        const table = document.createElement("table");
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>time</th>
+              ${DAYS.map((day) => `<th>${DAY_LABELS[day]}</th>`).join("")}
+            </tr>
+          </thead>
+          <tbody>
+            ${rows
+              .map(
+                (row) => `
+              <tr>
+                <td class="mono text-sm">${row.timeLabel}</td>
+                ${DAYS.map((day) => `<td>${renderCell(row.cells ? row.cells[day] : null)}</td>`).join("")}
+              </tr>
+            `
+              )
+              .join("")}
+          </tbody>
+        `;
+        wrap.replaceChildren(table);
+      } catch (error) {
+        wrap.className = "";
+        const banner = document.createElement("div");
+        banner.className = "banner banner-error";
+        banner.textContent = error.message;
+        wrap.replaceChildren(banner);
+      }
+    }
+
+    async function loadStatus() {
+      const badge = document.getElementById("status-badge");
+      try {
+        const status = await apiFetch("/api/routine/me/status");
+        badge.className = "badge";
+        badge.style.fontSize = "16px";
+        badge.style.padding = "8px 16px";
+        if (status.status === "FREE") {
+          badge.classList.add("badge-success");
+          badge.textContent = "FREE";
+        } else {
+          badge.classList.add("badge-danger");
+          badge.textContent = `BUSY · ${status.courseCode} · until ${status.until}`;
+        }
+      } catch (error) {
+        badge.className = "badge badge-warning";
+        badge.style.fontSize = "16px";
+        badge.style.padding = "8px 16px";
+        badge.textContent = error.message;
+      }
+    }
+
+    loadRoutine();
+    loadStatus();
+  </script>
+</body>
+</html>

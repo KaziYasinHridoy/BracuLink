@@ -3,7 +3,7 @@ spring:
     name: braculink
 
   datasource:
-    url: jdbc:mysql://localhost:3306/braculink?useSSL=false&serverTimezone=Asia/Dhaka
+    url: jdbc:mysql://localhost:3306/braculink?useSSL=false&serverTimezone=Asia/Dhaka&allowPublicKeyRetrieval=true
     username: root
     password: secure
     driver-class-name: com.mysql.cj.jdbc.Driver

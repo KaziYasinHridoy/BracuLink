@@ -185,7 +185,7 @@ public class CycleMatchingService {
     }
 
     private static SwapMemberDto toMember(SwapRequestView view) {
-        return new SwapMemberDto(view.getUserId(), view.getFullName(), view.getStudentId(),
+        return new SwapMemberDto(view.getRequestId(), view.getUserId(), view.getFullName(), view.getStudentId(),
                 view.getCurrentSectionName(), view.getDesiredSectionName());
     }
 

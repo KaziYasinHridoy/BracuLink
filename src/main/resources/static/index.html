@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>braculink</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="auth-shell">
+    <div class="auth-shell-inner stack stack-lg">
+      <div class="auth-logo">
+        <img src="assets/logo.svg" alt="braculink" />
+      </div>
+      <p class="auth-tagline">section swaps for bracu, done right</p>
+
+      <section id="signup-card" class="card hidden">
+        <p class="card-label">SIGN UP</p>
+        <div class="banner hidden"></div>
+        <form id="signup-form" class="stack stack-md">
+          <div class="field">
+            <label for="signup-fullName">full name</label>
+            <input id="signup-fullName" name="fullName" type="text" placeholder="your full name" required />
+          </div>
+          <div class="field">
+            <label for="signup-studentId">student id</label>
+            <input id="signup-studentId" name="studentId" type="text" placeholder="e.g. 21301234" required />
+          </div>
+          <div class="field">
+            <label for="signup-bracuEmail">bracu email</label>
+            <input id="signup-bracuEmail" name="bracuEmail" type="email" placeholder="you@g.bracu.ac.bd" required />
+          </div>
+          <div class="field">
+            <label for="signup-password">password</label>
+            <input id="signup-password" name="password" type="password" placeholder="at least 8 characters" minlength="8" required />
+          </div>
+          <button type="submit" class="btn">create account</button>
+        </form>
+      </section>
+
+      <section id="verify-card" class="card hidden">
+        <p class="card-label">VERIFY EMAIL</p>
+        <div class="banner hidden"></div>
+        <p class="muted mono text-sm">check the server console for your OTP</p>
+        <form id="verify-form" class="stack stack-md">
+          <div class="field">
+            <label for="verify-email">bracu email</label>
+            <input id="verify-email" name="email" type="email" placeholder="you@g.bracu.ac.bd" required />
+          </div>
+          <div class="field">
+            <label for="verify-otp">otp</label>
+            <input id="verify-otp" name="otp" type="text" placeholder="6-digit code" required />
+          </div>
+          <button type="submit" class="btn">verify</button>
+        </form>
+      </section>
+
+      <section id="login-card" class="card">
+        <p class="card-label">LOG IN</p>
+        <div class="banner hidden"></div>
+        <form id="login-form" class="stack stack-md">
+          <div class="field">
+            <label for="login-bracuEmail">bracu email</label>
+            <input id="login-bracuEmail" name="bracuEmail" type="email" placeholder="you@g.bracu.ac.bd" required />
+          </div>
+          <div class="field">
+            <label for="login-password">password</label>
+            <input id="login-password" name="password" type="password" placeholder="your password" required />
+          </div>
+          <button type="submit" class="btn">log in</button>
+        </form>
+        <p class="auth-toggle">new here? <a href="#" id="toggle-signup">sign up</a></p>
+      </section>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    const signupCard = document.getElementById("signup-card");
+    const verifyCard = document.getElementById("verify-card");
+    const loginCard = document.getElementById("login-card");
+    const toggleSignupLink = document.getElementById("toggle-signup");
+
+    function showCardBanner(card, message, type) {
+      const banner = card.querySelector(".banner");
+      banner.textContent = message;
+      banner.className = `banner ${type === "success" ? "banner-success" : "banner-error"}`;
+    }
+
+    function hideCardBanner(card) {
+      const banner = card.querySelector(".banner");
+      banner.className = "banner hidden";
+    }
+
+    toggleSignupLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      const opening = signupCard.classList.contains("hidden");
+      signupCard.classList.toggle("hidden");
+      toggleSignupLink.textContent = opening ? "already have an account?" : "sign up";
+      if (opening) {
+        signupCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+
+    document.getElementById("signup-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      hideCardBanner(signupCard);
+      const form = event.target;
+      const payload = {
+        fullName: form.fullName.value.trim(),
+        studentId: form.studentId.value.trim(),
+        bracuEmail: form.bracuEmail.value.trim(),
+        password: form.password.value,
+      };
+
+      try {
+        await apiFetch("/api/auth/signup", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        showCardBanner(signupCard, "signed up — check the server console for your OTP", "success");
+        document.getElementById("verify-email").value = payload.bracuEmail;
+        verifyCard.classList.remove("hidden");
+        verifyCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      } catch (error) {
+        showCardBanner(signupCard, error.message, "error");
+      }
+    });
+
+    document.getElementById("verify-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      hideCardBanner(verifyCard);
+      const form = event.target;
+      const payload = {
+        bracuEmail: form.email.value.trim(),
+        otp: form.otp.value.trim(),
+      };
+
+      try {
+        await apiFetch("/api/auth/verify", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        showCardBanner(verifyCard, "email verified — you can log in now", "success");
+        document.getElementById("login-bracuEmail").value = payload.bracuEmail;
+        loginCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      } catch (error) {
+        showCardBanner(verifyCard, error.message, "error");
+      }
+    });
+
+    document.getElementById("login-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      hideCardBanner(loginCard);
+      const form = event.target;
+      const payload = {
+        bracuEmail: form.bracuEmail.value.trim(),
+        password: form.password.value,
+      };
+
+      try {
+        const data = await apiFetch("/api/auth/login", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        setToken(data.token);
+        window.location.href = "dashboard.html";
+      } catch (error) {
+        showCardBanner(loginCard, error.message, "error");
+      }
+    });
+  </script>
+</body>
+</html>

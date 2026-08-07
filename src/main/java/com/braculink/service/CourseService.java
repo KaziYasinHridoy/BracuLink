@@ -1,8 +1,10 @@
 package com.braculink.service;
 
+import com.braculink.common.ApiException;
 import com.braculink.dao.CourseSectionDao;
 import com.braculink.dto.CourseSummaryDto;
 import com.braculink.dto.SectionPickerDto;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,5 +24,10 @@ public class CourseService {
 
     public List<CourseSummaryDto> searchCourses(String search) {
         return courseSectionDao.searchCourses(search);
+    }
+
+    public Integer getCurrentSemesterSessionId() {
+        return courseSectionDao.findCurrentSemesterSessionId()
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "No course data available yet"));
     }
 }

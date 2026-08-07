@@ -1,0 +1,27 @@
+# Test-only datasource. The main application.yml keeps MySQL for dev and prod;
+# this profile overrides it so integration tests need no running database.
+#
+# H2 flags, and why each is here:
+#   MODE=MySQL          - MySQL dialect: AUTO_INCREMENT, ENGINE=, backtick quoting.
+#   DATABASE_TO_LOWER   - keeps unquoted identifiers lowercase, as MySQL does on Linux.
+#   NON_KEYWORDS=USER   - H2 reserves USER; MySQL does not, and one of our seven tables is `user`.
+#   DB_CLOSE_DELAY=-1   - keeps the in-memory database alive between connections in a test run.
+spring:
+  datasource:
+    url: jdbc:h2:mem:braculink;MODE=MySQL;DATABASE_TO_LOWER=TRUE;NON_KEYWORDS=USER;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+
+  sql:
+    init:
+      mode: always
+      # Deliberately the real, hand-written schema from src/main/resources — a test that runs
+      # against a forked copy of the DDL proves nothing about the schema that ships.
+      schema-locations: classpath:schema.sql
+
+logging:
+  level:
+    org.springframework.jdbc.core: WARN
+    org.springframework.jdbc.core.JdbcTemplate: WARN
+    org.springframework.jdbc.core.StatementCreatorUtils: WARN

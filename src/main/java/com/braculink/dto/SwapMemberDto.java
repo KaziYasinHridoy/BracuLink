@@ -10,21 +10,31 @@ package com.braculink.dto;
  *
  * <p>{@code fromSection} and {@code toSection} are human-readable section names
  * ("15", "15B"), never internal section ids.
+ *
+ * <p>{@code requestId} is that member's underlying {@code swap_request} id — the client needs it
+ * to build the {@code swapRequestIds} list for {@code POST /api/swap-groups/propose}.
  */
 public class SwapMemberDto {
 
+    private final Long requestId;
     private final Long userId;
     private final String fullName;
     private final String studentId;
     private final String fromSection;
     private final String toSection;
 
-    public SwapMemberDto(Long userId, String fullName, String studentId, String fromSection, String toSection) {
+    public SwapMemberDto(Long requestId, Long userId, String fullName, String studentId, String fromSection,
+            String toSection) {
+        this.requestId = requestId;
         this.userId = userId;
         this.fullName = fullName;
         this.studentId = studentId;
         this.fromSection = fromSection;
         this.toSection = toSection;
+    }
+
+    public Long getRequestId() {
+        return requestId;
     }
 
     public Long getUserId() {

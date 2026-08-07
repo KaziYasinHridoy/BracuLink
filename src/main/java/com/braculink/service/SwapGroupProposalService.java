@@ -1,16 +1,12 @@
 package com.braculink.service;
 
 import com.braculink.common.ApiException;
-import com.braculink.dao.NotificationDao;
 import com.braculink.dao.SwapGroupDao;
 import com.braculink.dao.SwapRequestDao;
 import com.braculink.dto.SwapGroupDto;
 import com.braculink.dto.SwapGroupMemberDto;
-import com.braculink.model.Notification;
 import com.braculink.model.SwapGroup;
 import com.braculink.model.SwapRequest;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -54,15 +50,13 @@ public class SwapGroupProposalService {
 
     private final SwapRequestDao swapRequestDao;
     private final SwapGroupDao swapGroupDao;
-    private final NotificationDao notificationDao;
-    private final ObjectMapper objectMapper;
+    private final NotificationService notificationService;
 
     public SwapGroupProposalService(SwapRequestDao swapRequestDao, SwapGroupDao swapGroupDao,
-            NotificationDao notificationDao, ObjectMapper objectMapper) {
+            NotificationService notificationService) {
         this.swapRequestDao = swapRequestDao;
         this.swapGroupDao = swapGroupDao;
-        this.notificationDao = notificationDao;
-        this.objectMapper = objectMapper;
+        this.notificationService = notificationService;
     }
 
     // ------------------------------------------------------------------ propose
@@ -347,26 +341,12 @@ public class SwapGroupProposalService {
     }
 
     private void notify(Long userId, String type, Long groupId, String courseCode, int groupSize) {
-        Notification notification = new Notification();
-        notification.setUserId(userId);
-        notification.setType(type);
-        notification.setPayload(payload(groupId, courseCode, groupSize));
-        notification.setRead(false);
-        notification.setCreatedAt(LocalDateTime.now());
-        notificationDao.insert(notification);
-    }
-
-    private String payload(Long groupId, String courseCode, int groupSize) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("groupId", groupId);
         payload.put("courseCode", courseCode);
         if (groupSize > 0) {
             payload.put("groupSize", groupSize);
         }
-        try {
-            return objectMapper.writeValueAsString(payload);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize notification payload", e);
-        }
+        notificationService.notify(userId, type, payload);
     }
 }

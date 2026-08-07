@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>braculink // friends</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!--
+    CANONICAL NAV — copy this block verbatim into every future page.
+    Set class="active" on the <a> matching the current page.
+
+    <nav class="nav">
+      <a href="dashboard.html"><img src="assets/logo.svg" alt="braculink" height="24" /></a>
+      <div class="nav-links">
+        <a href="dashboard.html" class="active">Dashboard</a>
+        <a href="courses.html">Courses</a>
+        <a href="swap.html">Swap</a>
+        <a href="groups.html">Groups</a>
+        <a href="friends.html">Friends</a>
+        <a href="profile.html">Profile</a>
+        <div class="notif-wrap">
+          <button type="button" class="notif-bell" id="notif-bell-button" aria-label="Notifications">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            <span id="notif-count" class="notif-badge hidden">0</span>
+          </button>
+          <div id="notif-panel" class="card notif-panel hidden">
+            <p class="card-label">NOTIFICATIONS</p>
+            <div id="notif-list" class="stack stack-sm">loading…</div>
+          </div>
+        </div>
+        <button type="button" class="btn-secondary" onclick="logout()">logout</button>
+      </div>
+    </nav>
+  -->
+  <nav class="nav">
+    <a href="dashboard.html"><img src="assets/logo.svg" alt="braculink" height="24" /></a>
+    <div class="nav-links">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="courses.html">Courses</a>
+      <a href="swap.html">Swap</a>
+      <a href="groups.html">Groups</a>
+      <a href="friends.html" class="active">Friends</a>
+      <a href="profile.html">Profile</a>
+      <div class="notif-wrap">
+        <button type="button" class="notif-bell" id="notif-bell-button" aria-label="Notifications">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          <span id="notif-count" class="notif-badge hidden">0</span>
+        </button>
+        <div id="notif-panel" class="card notif-panel hidden">
+          <p class="card-label">NOTIFICATIONS</p>
+          <div id="notif-list" class="stack stack-sm">loading…</div>
+        </div>
+      </div>
+      <button type="button" class="btn-secondary" onclick="logout()">logout</button>
+    </div>
+  </nav>
+
+  <div class="container stack stack-lg" style="padding-top: 32px; padding-bottom: 48px;">
+    <h1>friends</h1>
+
+    <section class="card stack stack-md">
+      <p class="card-label">ADD FRIEND</p>
+      <div id="add-banner" class="banner hidden"></div>
+      <form id="add-form" class="row row-md" style="align-items: flex-end;">
+        <div class="field" style="flex: 1;">
+          <label for="addressee-id">USER ID</label>
+          <input id="addressee-id" type="number" min="1" placeholder="e.g. 42" autocomplete="off" required />
+        </div>
+        <button type="submit" id="add-submit" class="btn">Add</button>
+      </form>
+    </section>
+
+    <section class="card stack stack-md">
+      <p class="card-label">INCOMING REQUESTS</p>
+      <div id="incoming-banner" class="banner hidden"></div>
+      <div id="incoming-wrap" class="mono muted text-sm">loading…</div>
+    </section>
+
+    <section class="card stack stack-md">
+      <p class="card-label">MY FRIENDS</p>
+      <div id="friends-banner" class="banner hidden"></div>
+      <div id="friends-wrap" class="mono muted text-sm">loading…</div>
+    </section>
+
+    <section id="routine-card" class="card stack stack-md hidden">
+      <h2 id="routine-title" style="margin: 0;"></h2>
+      <div id="routine-banner" class="banner hidden"></div>
+      <div id="routine-status-wrap" class="hidden">
+        <div id="routine-status-badge" class="badge muted mono" style="font-size: 16px; padding: 8px 16px;"></div>
+      </div>
+      <div id="routine-wrap" class="mono muted text-sm"></div>
+    </section>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/notifications.js"></script>
+  <script>
+    requireAuth();
+    initNotifications();
+
+    const DAYS = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+    const DAY_LABELS = { SUNDAY: "SUN", MONDAY: "MON", TUESDAY: "TUE", WEDNESDAY: "WED", THURSDAY: "THU", FRIDAY: "FRI", SATURDAY: "SAT" };
+
+    function escapeHtml(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    // ---------- Add friend ----------
+
+    async function submitAdd(event) {
+      event.preventDefault();
+      const banner = document.getElementById("add-banner");
+      const submitButton = document.getElementById("add-submit");
+      const input = document.getElementById("addressee-id");
+      banner.className = "banner hidden";
+      submitButton.disabled = true;
+
+      try {
+        await apiFetch("/api/friends/request", {
+          method: "POST",
+          body: JSON.stringify({ addresseeId: Number(input.value) }),
+        });
+        input.value = "";
+        banner.className = "banner banner-success";
+        banner.textContent = "Request sent";
+      } catch (error) {
+        banner.className = "banner banner-error";
+        banner.textContent = error.message;
+      } finally {
+        submitButton.disabled = false;
+      }
+    }
+
+    // ---------- Incoming requests ----------
+
+    function renderIncoming(requests) {
+      const wrap = document.getElementById("incoming-wrap");
+      if (!requests || requests.length === 0) {
+        wrap.textContent = "no pending requests";
+        return;
+      }
+
+      wrap.className = "stack stack-sm";
+      wrap.replaceChildren(
+        ...requests.map((request) => {
+          const row = document.createElement("div");
+          row.className = "row row-md";
+          row.style.justifyContent = "space-between";
+          row.style.alignItems = "center";
+          row.innerHTML = `
+            <div class="row row-sm" style="align-items: baseline;">
+              <span style="font-weight: 500;">${escapeHtml(request.fullName)}</span>
+              <span class="mono muted text-sm">${escapeHtml(request.studentId)}</span>
+            </div>
+            <div class="row row-sm">
+              <button type="button" class="btn btn-sm btn-accept">Accept</button>
+              <button type="button" class="btn-secondary btn-sm btn-decline">Decline</button>
+            </div>
+          `;
+          row.querySelector(".btn-accept").addEventListener("click", (e) => respondIncoming(request.userId, "accept", e.target));
+          row.querySelector(".btn-decline").addEventListener("click", (e) => respondIncoming(request.userId, "decline", e.target));
+          return row;
+        })
+      );
+    }
+
+    async function respondIncoming(requesterId, action, button) {
+      const banner = document.getElementById("incoming-banner");
+      banner.className = "banner hidden";
+      button.disabled = true;
+      try {
+        await apiFetch(`/api/friends/${requesterId}/${action}`, { method: "POST" });
+        await loadIncoming();
+        if (action === "accept") await loadFriends();
+      } catch (error) {
+        banner.className = "banner banner-error";
+        banner.textContent = error.message;
+        button.disabled = false;
+      }
+    }
+
+    async function loadIncoming() {
+      const wrap = document.getElementById("incoming-wrap");
+      wrap.className = "mono muted text-sm";
+      wrap.textContent = "loading…";
+      try {
+        const requests = await apiFetch("/api/friends/requests");
+        renderIncoming(requests);
+      } catch (error) {
+        wrap.className = "";
+        const banner = document.createElement("div");
+        banner.className = "banner banner-error";
+        banner.textContent = error.message;
+        wrap.replaceChildren(banner);
+      }
+    }
+
+    // ---------- My friends ----------
+
+    function renderFriends(friends) {
+      const wrap = document.getElementById("friends-wrap");
+      if (!friends || friends.length === 0) {
+        wrap.className = "mono muted text-sm";
+        wrap.textContent = "no friends yet";
+        return;
+      }
+
+      wrap.className = "";
+      const table = document.createElement("table");
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>name</th>
+            <th>id</th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${friends
+            .map(
+              (friend) => `
+            <tr data-id="${friend.userId}" data-name="${escapeHtml(friend.fullName)}">
+              <td style="font-weight: 500;">${escapeHtml(friend.fullName)}</td>
+              <td class="mono muted">${escapeHtml(friend.studentId)}</td>
+              <td><button type="button" class="btn-secondary btn-sm btn-view-routine">View routine</button></td>
+              <td><button type="button" class="btn-danger btn-sm btn-unfriend">Unfriend</button></td>
+            </tr>
+          `
+            )
+            .join("")}
+        </tbody>
+      `;
+
+      table.querySelectorAll("tbody tr").forEach((row) => {
+        const id = Number(row.dataset.id);
+        const name = row.dataset.name;
+        row.querySelector(".btn-view-routine").addEventListener("click", () => viewRoutine(id, name));
+        row.querySelector(".btn-unfriend").addEventListener("click", (e) => unfriend(id, e.target));
+      });
+
+      wrap.replaceChildren(table);
+    }
+
+    async function unfriend(userId, button) {
+      const banner = document.getElementById("friends-banner");
+      banner.className = "banner hidden";
+      button.disabled = true;
+      try {
+        await apiFetch(`/api/friends/${userId}`, { method: "DELETE" });
+        document.getElementById("routine-card").classList.add("hidden");
+        await loadFriends();
+      } catch (error) {
+        banner.className = "banner banner-error";
+        banner.textContent = error.message;
+        button.disabled = false;
+      }
+    }
+
+    async function loadFriends() {
+      const wrap = document.getElementById("friends-wrap");
+      wrap.className = "mono muted text-sm";
+      wrap.textContent = "loading…";
+      try {
+        const friends = await apiFetch("/api/friends");
+        renderFriends(friends);
+      } catch (error) {
+        wrap.className = "";
+        const banner = document.createElement("div");
+        banner.className = "banner banner-error";
+        banner.textContent = error.message;
+        wrap.replaceChildren(banner);
+      }
+    }
+
+    // ---------- Friend routine (identical treatment to dashboard.html) ----------
+
+    function renderRoutineCell(text) {
+      if (!text) {
+        return `<span class="muted">—</span>`;
+      }
+      const dashIndex = text.indexOf("-");
+      const courseCode = dashIndex === -1 ? text : text.slice(0, dashIndex);
+      const rest = dashIndex === -1 ? "" : text.slice(dashIndex + 1);
+      return `
+        <div class="mono" style="font-weight: 600; color: var(--accent);">${courseCode}</div>
+        ${rest ? `<div class="muted text-sm">${rest}</div>` : ""}
+      `;
+    }
+
+    function renderRoutineTable(rows) {
+      const wrap = document.getElementById("routine-wrap");
+      if (!rows || rows.length === 0) {
+        wrap.className = "mono muted text-sm";
+        wrap.textContent = "no classes enrolled yet";
+        return;
+      }
+
+      wrap.className = "";
+      const table = document.createElement("table");
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>time</th>
+            ${DAYS.map((day) => `<th>${DAY_LABELS[day]}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows
+            .map(
+              (row) => `
+            <tr>
+              <td class="mono text-sm">${row.timeLabel}</td>
+              ${DAYS.map((day) => `<td>${renderRoutineCell(row.cells ? row.cells[day] : null)}</td>`).join("")}
+            </tr>
+          `
+            )
+            .join("")}
+        </tbody>
+      `;
+      wrap.replaceChildren(table);
+    }
+
+    function renderRoutineStatus(status) {
+      const wrap = document.getElementById("routine-status-wrap");
+      const badge = document.getElementById("routine-status-badge");
+      wrap.classList.remove("hidden");
+      badge.className = "badge";
+      badge.style.fontSize = "16px";
+      badge.style.padding = "8px 16px";
+      if (status.status === "FREE") {
+        badge.classList.add("badge-success");
+        badge.textContent = "FREE";
+      } else {
+        badge.classList.add("badge-danger");
+        badge.textContent = `BUSY · ${status.courseCode} · until ${status.until}`;
+      }
+    }
+
+    async function viewRoutine(userId, fullName) {
+      const card = document.getElementById("routine-card");
+      const banner = document.getElementById("routine-banner");
+      const statusWrap = document.getElementById("routine-status-wrap");
+      const routineWrap = document.getElementById("routine-wrap");
+
+      document.getElementById("routine-title").textContent = `${fullName}'s routine`;
+      banner.className = "banner hidden";
+      statusWrap.classList.add("hidden");
+      routineWrap.className = "mono muted text-sm";
+      routineWrap.textContent = "loading…";
+      card.classList.remove("hidden");
+      card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+      try {
+        const [rows, status] = await Promise.all([
+          apiFetch(`/api/users/${userId}/routine`),
+          apiFetch(`/api/users/${userId}/status`),
+        ]);
+        renderRoutineStatus(status);
+        renderRoutineTable(rows);
+      } catch (error) {
+        routineWrap.replaceChildren();
+        routineWrap.className = "";
+        statusWrap.classList.add("hidden");
+        banner.className = "banner banner-error";
+        banner.textContent = error.status === 403 ? "You need to be friends to view this routine" : error.message;
+      }
+    }
+
+    document.getElementById("add-form").addEventListener("submit", submitAdd);
+
+    loadIncoming();
+    loadFriends();
+  </script>
+</body>
+</html>
