@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎓 Bracu Link
+# 🎓 BracuLink
 
 ### Connecting BRAC University Students Through One Smart Platform
 
