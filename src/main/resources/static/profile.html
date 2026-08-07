@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>braculink // profile</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!--
+    CANONICAL NAV — copy this block verbatim into every future page.
+    Set class="active" on the <a> matching the current page.
+
+    <nav class="nav">
+      <a href="dashboard.html"><img src="assets/logo.svg" alt="braculink" height="24" /></a>
+      <div class="nav-links">
+        <a href="dashboard.html" class="active">Dashboard</a>
+        <a href="courses.html">Courses</a>
+        <a href="swap.html">Swap</a>
+        <a href="groups.html">Groups</a>
+        <a href="friends.html">Friends</a>
+        <a href="profile.html">Profile</a>
+        <div class="notif-wrap">
+          <button type="button" class="notif-bell" id="notif-bell-button" aria-label="Notifications">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            <span id="notif-count" class="notif-badge hidden">0</span>
+          </button>
+          <div id="notif-panel" class="card notif-panel hidden">
+            <p class="card-label">NOTIFICATIONS</p>
+            <div id="notif-list" class="stack stack-sm">loading…</div>
+          </div>
+        </div>
+        <button type="button" class="btn-secondary" onclick="logout()">logout</button>
+      </div>
+    </nav>
+  -->
+  <nav class="nav">
+    <a href="dashboard.html"><img src="assets/logo.svg" alt="braculink" height="24" /></a>
+    <div class="nav-links">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="courses.html">Courses</a>
+      <a href="swap.html">Swap</a>
+      <a href="groups.html">Groups</a>
+      <a href="friends.html">Friends</a>
+      <a href="profile.html" class="active">Profile</a>
+      <div class="notif-wrap">
+        <button type="button" class="notif-bell" id="notif-bell-button" aria-label="Notifications">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          <span id="notif-count" class="notif-badge hidden">0</span>
+        </button>
+        <div id="notif-panel" class="card notif-panel hidden">
+          <p class="card-label">NOTIFICATIONS</p>
+          <div id="notif-list" class="stack stack-sm">loading…</div>
+        </div>
+      </div>
+      <button type="button" class="btn-secondary" onclick="logout()">logout</button>
+    </div>
+  </nav>
+
+  <div class="container stack stack-lg" style="padding-top: 32px; padding-bottom: 48px;">
+    <h1>profile</h1>
+
+    <section class="card stack stack-md">
+      <p class="card-label">ACCOUNT</p>
+      <div id="account-wrap" class="stack stack-md">
+        <div class="field">
+          <p class="card-label" style="margin-bottom: 4px;">FULL NAME</p>
+          <p class="mono" id="account-fullName" style="margin: 0;">loading…</p>
+        </div>
+        <div class="field">
+          <p class="card-label" style="margin-bottom: 4px;">STUDENT ID</p>
+          <p class="mono" id="account-studentId" style="margin: 0;">loading…</p>
+        </div>
+        <div class="field">
+          <p class="card-label" style="margin-bottom: 4px;">BRACU EMAIL</p>
+          <p class="mono" id="account-bracuEmail" style="margin: 0;">loading…</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card stack stack-md">
+      <p class="card-label">CONTACT &amp; PRIVACY</p>
+      <div id="contact-banner" class="banner hidden"></div>
+      <form id="contact-form" class="stack stack-md">
+        <div class="field">
+          <label for="phone-number">PHONE NUMBER</label>
+          <input id="phone-number" type="tel" placeholder="e.g. 01712345678" autocomplete="off" />
+        </div>
+        <div class="row row-sm" style="align-items: center;">
+          <input id="phone-public" type="checkbox" />
+          <label for="phone-public" style="margin: 0;">Make phone number visible to swap partners</label>
+        </div>
+        <p class="mono muted text-sm" style="margin: 0;">
+          facebook link is always visible to swap partners. phone is only shared when this is on.
+        </p>
+        <div class="field">
+          <label for="fb-url">FACEBOOK PROFILE URL</label>
+          <input id="fb-url" type="url" placeholder="https://facebook.com/yourname" autocomplete="off" />
+        </div>
+        <div>
+          <button type="submit" id="contact-submit" class="btn">Save</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/notifications.js"></script>
+  <script>
+    requireAuth();
+    initNotifications();
+
+    async function loadAccount() {
+      try {
+        const me = await apiFetch("/api/users/me");
+        document.getElementById("account-fullName").textContent = me.fullName;
+        document.getElementById("account-studentId").textContent = me.studentId;
+        document.getElementById("account-bracuEmail").textContent = me.bracuEmail;
+
+        document.getElementById("phone-number").value = me.phoneNumber || "";
+        document.getElementById("phone-public").checked = !!me.phonePublic;
+        document.getElementById("fb-url").value = me.fbProfileUrl || "";
+      } catch (error) {
+        const banner = document.createElement("div");
+        banner.className = "banner banner-error";
+        banner.textContent = error.message;
+        document.getElementById("account-wrap").replaceChildren(banner);
+      }
+    }
+
+    async function submitContact(event) {
+      event.preventDefault();
+      const banner = document.getElementById("contact-banner");
+      const submitButton = document.getElementById("contact-submit");
+      banner.className = "banner hidden";
+      submitButton.disabled = true;
+
+      try {
+        await apiFetch("/api/users/me", {
+          method: "PUT",
+          body: JSON.stringify({
+            phoneNumber: document.getElementById("phone-number").value.trim(),
+            phonePublic: document.getElementById("phone-public").checked,
+            fbProfileUrl: document.getElementById("fb-url").value.trim(),
+          }),
+        });
+        banner.className = "banner banner-success";
+        banner.textContent = "Profile updated";
+      } catch (error) {
+        banner.className = "banner banner-error";
+        banner.textContent = error.message;
+      } finally {
+        submitButton.disabled = false;
+      }
+    }
+
+    document.getElementById("contact-form").addEventListener("submit", submitContact);
+
+    loadAccount();
+  </script>
+</body>
+</html>

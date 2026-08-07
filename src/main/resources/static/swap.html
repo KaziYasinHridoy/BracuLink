@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>braculink // swap</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!--
+    CANONICAL NAV — copy this block verbatim into every future page.
+    Set class="active" on the <a> matching the current page.
+
+    <nav class="nav">
+      <a href="dashboard.html"><img src="assets/logo.svg" alt="braculink" height="24" /></a>
+      <div class="nav-links">
+        <a href="dashboard.html" class="active">Dashboard</a>
+        <a href="courses.html">Courses</a>
+        <a href="swap.html">Swap</a>
+        <a href="groups.html">Groups</a>
+        <a href="friends.html">Friends</a>
+        <a href="profile.html">Profile</a>
+        <div class="notif-wrap">
+          <button type="button" class="notif-bell" id="notif-bell-button" aria-label="Notifications">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            <span id="notif-count" class="notif-badge hidden">0</span>
+          </button>
+          <div id="notif-panel" class="card notif-panel hidden">
+            <p class="card-label">NOTIFICATIONS</p>
+            <div id="notif-list" class="stack stack-sm">loading…</div>
+          </div>
+        </div>
+        <button type="button" class="btn-secondary" onclick="logout()">logout</button>
+      </div>
+    </nav>
+  -->
+  <nav class="nav">
+    <a href="dashboard.html"><img src="assets/logo.svg" alt="braculink" height="24" /></a>
+    <div class="nav-links">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="courses.html">Courses</a>
+      <a href="swap.html" class="active">Swap</a>
+      <a href="groups.html">Groups</a>
+      <a href="friends.html">Friends</a>
+      <a href="profile.html">Profile</a>
+      <div class="notif-wrap">
+        <button type="button" class="notif-bell" id="notif-bell-button" aria-label="Notifications">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          <span id="notif-count" class="notif-badge hidden">0</span>
+        </button>
+        <div id="notif-panel" class="card notif-panel hidden">
+          <p class="card-label">NOTIFICATIONS</p>
+          <div id="notif-list" class="stack stack-sm">loading…</div>
+        </div>
+      </div>
+      <button type="button" class="btn-secondary" onclick="logout()">logout</button>
+    </div>
+  </nav>
+
+  <div class="container stack stack-lg" style="padding-top: 32px; padding-bottom: 48px;">
+    <h1>swap sections</h1>
+
+    <section class="card stack stack-md">
+      <p class="card-label">REQUEST A SWAP</p>
+      <div id="request-banner" class="banner hidden"></div>
+      <form id="request-form" class="stack stack-md">
+        <div class="field">
+          <label for="course-code">COURSE CODE</label>
+          <input id="course-code" type="text" placeholder="e.g. CSE370" autocomplete="off" required />
+        </div>
+        <div id="picker-banner" class="banner hidden"></div>
+        <div id="picker-wrap" class="stack stack-md hidden">
+          <div class="field">
+            <label>YOUR SECTION</label>
+            <div class="section-picker-selected-label" id="current-section-label">none selected</div>
+            <div id="current-section-picker" class="section-picker-grid"></div>
+          </div>
+          <div class="field">
+            <label>WANT SECTION</label>
+            <div class="section-picker-selected-label" id="desired-section-label">none selected</div>
+            <div id="desired-section-picker" class="section-picker-grid"></div>
+          </div>
+        </div>
+        <div>
+          <button type="submit" id="request-submit" class="btn" disabled>Request swap</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card stack stack-md">
+      <p class="card-label">MY SWAP REQUESTS</p>
+      <div id="requests-wrap" class="mono muted text-sm">loading…</div>
+    </section>
+
+    <section id="suggestions-card" class="card stack stack-md hidden">
+      <p class="card-label" id="suggestions-title">SUGGESTED GROUPS</p>
+      <div id="suggestions-banner" class="banner hidden"></div>
+      <div id="suggestions-wrap" class="stack stack-md"></div>
+    </section>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/notifications.js"></script>
+  <script>
+    requireAuth();
+    initNotifications();
+
+    let activeRequestId = null;
+    let activeCourseCode = null;
+
+    let currentSemesterSessionId = null;
+    let pickerCourseCode = null;
+    let pickerSections = [];
+    let selectedCurrentSection = null;
+    let selectedDesiredSection = null;
+    let courseDebounceTimer = null;
+
+    function escapeHtml(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function statusBadgeClass(status) {
+      if (status === "PENDING") return "badge-warning";
+      if (status === "MATCHED") return "badge-accent";
+      if (status === "CANCELLED") return "badge-danger";
+      return "badge";
+    }
+
+    // ---------- Section pickers ----------
+
+    async function getSemesterSessionId() {
+      if (currentSemesterSessionId === null) {
+        currentSemesterSessionId = await apiFetch("/api/courses/current-semester");
+      }
+      return currentSemesterSessionId;
+    }
+
+    function renderCell(text) {
+      return text ? escapeHtml(text) : "—";
+    }
+
+    function updateSubmitEnabled() {
+      document.getElementById("request-submit").disabled = !(
+        pickerCourseCode &&
+        selectedCurrentSection &&
+        selectedDesiredSection
+      );
+    }
+
+    function renderSectionCard(section, selectedName) {
+      const card = document.createElement("div");
+      card.className = "section-pick-card" + (section.sectionName === selectedName ? " selected" : "");
+      const seats = section.availableSeats == null ? 0 : section.availableSeats;
+      card.innerHTML = `
+        <div class="section-pick-card-header">
+          <span class="section-pick-card-name">${renderCell(section.sectionName)}</span>
+          <span class="mono text-sm" style="color: ${seats > 0 ? "var(--success)" : "var(--danger)"};">${seats} seats</span>
+        </div>
+        <div class="section-pick-card-row"><strong>Theory:</strong> ${renderCell(section.theoryFaculty)} &middot; ${renderCell(section.theoryTiming)}</div>
+        ${
+          section.hasLab
+            ? `<div class="section-pick-card-row"><strong>Lab:</strong> ${renderCell(section.labFaculty)} &middot; ${renderCell(section.labTiming)}</div>`
+            : ""
+        }
+        <div class="section-pick-card-row"><strong>Room:</strong> ${renderCell(section.roomName)}</div>
+      `;
+      return card;
+    }
+
+    function renderPicker(containerId, labelId, selectedName, onSelect) {
+      const container = document.getElementById(containerId);
+      const label = document.getElementById(labelId);
+      label.textContent = selectedName ? `selected: ${selectedName}` : "none selected";
+
+      container.replaceChildren(
+        ...pickerSections.map((section) => {
+          const card = renderSectionCard(section, selectedName);
+          card.addEventListener("click", () => onSelect(section.sectionName));
+          return card;
+        })
+      );
+    }
+
+    function renderPickers() {
+      renderPicker("current-section-picker", "current-section-label", selectedCurrentSection, (name) => {
+        selectedCurrentSection = name;
+        renderPickers();
+        updateSubmitEnabled();
+      });
+      renderPicker("desired-section-picker", "desired-section-label", selectedDesiredSection, (name) => {
+        selectedDesiredSection = name;
+        renderPickers();
+        updateSubmitEnabled();
+      });
+    }
+
+    async function loadPickerSections(courseCode) {
+      const banner = document.getElementById("picker-banner");
+      const wrap = document.getElementById("picker-wrap");
+      banner.className = "banner hidden";
+
+      try {
+        const semesterSessionId = await getSemesterSessionId();
+        const sections = await apiFetch(`/api/courses/${encodeURIComponent(courseCode)}/sections?semesterSessionId=${semesterSessionId}`);
+        pickerCourseCode = courseCode;
+        pickerSections = sections || [];
+        selectedCurrentSection = null;
+        selectedDesiredSection = null;
+
+        if (pickerSections.length === 0) {
+          wrap.classList.add("hidden");
+          banner.className = "banner banner-error";
+          banner.textContent = "no sections found for this course";
+        } else {
+          wrap.classList.remove("hidden");
+          renderPickers();
+        }
+      } catch (error) {
+        pickerCourseCode = null;
+        pickerSections = [];
+        wrap.classList.add("hidden");
+        banner.className = "banner banner-error";
+        banner.textContent = error.message;
+      }
+      updateSubmitEnabled();
+    }
+
+    function onCourseCodeInput(event) {
+      const courseCode = event.target.value.trim().toUpperCase();
+      clearTimeout(courseDebounceTimer);
+
+      if (!courseCode) {
+        pickerCourseCode = null;
+        pickerSections = [];
+        document.getElementById("picker-wrap").classList.add("hidden");
+        document.getElementById("picker-banner").className = "banner hidden";
+        updateSubmitEnabled();
+        return;
+      }
+
+      courseDebounceTimer = setTimeout(() => loadPickerSections(courseCode), 350);
+    }
+
+    // ---------- Request a swap ----------
+
+    async function submitRequest(event) {
+      event.preventDefault();
+      const banner = document.getElementById("request-banner");
+      const submitButton = document.getElementById("request-submit");
+      banner.className = "banner hidden";
+      submitButton.disabled = true;
+
+      try {
+        await apiFetch("/api/swap-requests", {
+          method: "POST",
+          body: JSON.stringify({
+            courseCode: pickerCourseCode,
+            currentSectionName: selectedCurrentSection,
+            desiredSectionName: selectedDesiredSection,
+          }),
+        });
+        document.getElementById("request-form").reset();
+        pickerCourseCode = null;
+        pickerSections = [];
+        selectedCurrentSection = null;
+        selectedDesiredSection = null;
+        document.getElementById("picker-wrap").classList.add("hidden");
+        banner.className = "banner banner-success";
+        banner.textContent = "Swap request created";
+        await loadMyRequests();
+      } catch (error) {
+        banner.className = "banner banner-error";
+        banner.textContent = error.message;
+        updateSubmitEnabled();
+      }
+    }
+
+    // ---------- My swap requests ----------
+
+    function renderRequests(requests) {
+      const wrap = document.getElementById("requests-wrap");
+      if (!requests || requests.length === 0) {
+        wrap.textContent = "no swap requests yet";
+        return;
+      }
+
+      const table = document.createElement("table");
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>course</th>
+            <th>from</th>
+            <th>to</th>
+            <th>status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${requests
+            .map(
+              (request) => `
+            <tr data-id="${request.id}" data-course="${escapeHtml(request.courseCode)}">
+              <td class="mono">${escapeHtml(request.courseCode)}</td>
+              <td class="mono">${escapeHtml(request.currentSectionName)}</td>
+              <td class="mono">${escapeHtml(request.desiredSectionName)}</td>
+              <td><span class="badge ${statusBadgeClass(request.status)}">${escapeHtml(request.status)}</span></td>
+              <td>${
+                request.status === "PENDING"
+                  ? `<div class="row row-sm">
+                      <button type="button" class="btn-secondary btn-sm find-groups-btn">Find groups</button>
+                      <button type="button" class="btn-danger btn-sm cancel-request-btn">Cancel</button>
+                    </div>`
+                  : ""
+              }</td>
+            </tr>
+          `
+            )
+            .join("")}
+        </tbody>
+      `;
+
+      table.querySelectorAll("tbody tr").forEach((row) => {
+        const findButton = row.querySelector(".find-groups-btn");
+        if (findButton) {
+          findButton.addEventListener("click", () =>
+            findGroups(Number(row.dataset.id), row.dataset.course, findButton)
+          );
+        }
+        const cancelButton = row.querySelector(".cancel-request-btn");
+        if (cancelButton) {
+          cancelButton.addEventListener("click", () =>
+            cancelRequest(Number(row.dataset.id), cancelButton)
+          );
+        }
+      });
+
+      wrap.replaceChildren(table);
+    }
+
+    async function loadMyRequests() {
+      const wrap = document.getElementById("requests-wrap");
+      wrap.textContent = "loading…";
+      try {
+        const requests = await apiFetch("/api/swap-requests/me");
+        renderRequests(requests);
+      } catch (error) {
+        wrap.className = "";
+        const banner = document.createElement("div");
+        banner.className = "banner banner-error";
+        banner.textContent = error.message;
+        wrap.replaceChildren(banner);
+      }
+    }
+
+    async function cancelRequest(id, button) {
+      const banner = document.getElementById("request-banner");
+      banner.className = "banner hidden";
+      button.disabled = true;
+
+      try {
+        await apiFetch(`/api/swap-requests/${id}`, { method: "DELETE" });
+        await loadMyRequests();
+      } catch (error) {
+        banner.className = "banner banner-error";
+        banner.textContent = error.message;
+        button.disabled = false;
+      }
+    }
+
+    // ---------- Suggested groups ----------
+
+    function renderGroup(suggestion) {
+      const card = document.createElement("div");
+      card.className = "card-nested stack stack-md";
+
+      const memberRows = suggestion.members
+        .map(
+          (member) => `
+          <div class="row row-md" style="justify-content: space-between; align-items: baseline;">
+            <div class="row row-sm" style="align-items: baseline;">
+              <span style="font-weight: 500;">${escapeHtml(member.fullName)}</span>
+              <span class="mono muted text-sm">${escapeHtml(member.studentId)}</span>
+            </div>
+            <span class="mono">
+              ${escapeHtml(member.fromSection)}
+              <span style="color: var(--accent);">&rarr;</span>
+              ${escapeHtml(member.toSection)}
+            </span>
+          </div>
+        `
+        )
+        .join("");
+
+      card.innerHTML = `
+        <div class="row" style="justify-content: space-between; align-items: center;">
+          <span class="mono" style="font-weight: 600;">GROUP &middot; ${suggestion.groupSize} members</span>
+          <span class="badge badge-accent">${suggestion.groupSize}</span>
+        </div>
+        <div class="stack stack-sm">${memberRows}</div>
+        <div>
+          <button type="button" class="btn-magenta">Propose this group</button>
+        </div>
+      `;
+
+      const proposeButton = card.querySelector(".btn-magenta");
+      const swapRequestIds = suggestion.members.map((member) => member.requestId);
+      proposeButton.addEventListener("click", () => proposeGroup(swapRequestIds, proposeButton));
+
+      return card;
+    }
+
+    function renderSuggestions(suggestions) {
+      const wrap = document.getElementById("suggestions-wrap");
+      if (!suggestions || suggestions.length === 0) {
+        wrap.replaceChildren();
+        wrap.textContent = "no viable groups yet — check back once more students post requests";
+        return;
+      }
+      wrap.replaceChildren(...suggestions.map(renderGroup));
+    }
+
+    async function findGroups(requestId, courseCode, button) {
+      activeRequestId = requestId;
+      activeCourseCode = courseCode;
+
+      const card = document.getElementById("suggestions-card");
+      const banner = document.getElementById("suggestions-banner");
+      const wrap = document.getElementById("suggestions-wrap");
+
+      document.getElementById("suggestions-title").textContent = `SUGGESTED GROUPS · ${courseCode}`;
+      banner.className = "banner hidden";
+      wrap.textContent = "loading…";
+      card.classList.remove("hidden");
+      card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+      if (button) button.disabled = true;
+      try {
+        const suggestions = await apiFetch(`/api/swap-requests/${requestId}/suggestions`);
+        renderSuggestions(suggestions);
+      } catch (error) {
+        wrap.replaceChildren();
+        banner.className = "banner banner-error";
+        banner.textContent = error.message;
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
+    async function proposeGroup(swapRequestIds, button) {
+      const banner = document.getElementById("suggestions-banner");
+      banner.className = "banner hidden";
+      button.disabled = true;
+
+      try {
+        await apiFetch("/api/swap-groups/propose", {
+          method: "POST",
+          body: JSON.stringify({ swapRequestIds }),
+        });
+        banner.className = "banner banner-success";
+        banner.innerHTML = `Group proposed &mdash; head to <a href="groups.html">Groups</a> to confirm`;
+        document.getElementById("suggestions-wrap").replaceChildren();
+        await loadMyRequests();
+      } catch (error) {
+        banner.className = "banner banner-error";
+        banner.textContent = error.message;
+        button.disabled = false;
+        if (activeRequestId != null) {
+          await findGroups(activeRequestId, activeCourseCode, null);
+        }
+      }
+    }
+
+    document.getElementById("request-form").addEventListener("submit", submitRequest);
+    document.getElementById("course-code").addEventListener("input", onCourseCodeInput);
+
+    loadMyRequests();
+  </script>
+</body>
+</html>

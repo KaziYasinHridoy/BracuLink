@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: braculink
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/braculink?useSSL=false&serverTimezone=Asia/Dhaka&allowPublicKeyRetrieval=true
+    username: root
+    password: secure
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  sql:
+    init:
+      mode: always
+
+app:
+  jwt:
+    secret: braculink-local-dev-secret-key-change-me-32-bytes-min
+    expiration-ms: 86400000
+
+logging:
+  level:
+    org.springframework.jdbc.core: TRACE
+    org.springframework.jdbc.core.JdbcTemplate: DEBUG
+    org.springframework.jdbc.core.StatementCreatorUtils: TRACE
