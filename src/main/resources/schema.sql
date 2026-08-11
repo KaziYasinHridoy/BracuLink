@@ -1,5 +1,3 @@
--- Braculink schema — hand-written DDL, no ORM generation.
--- ENGINE=InnoDB everywhere so foreign keys are actually enforced (MyISAM ignores them).
 
 CREATE TABLE IF NOT EXISTS course_section (
     id                   BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -68,7 +66,6 @@ CREATE TABLE IF NOT EXISTS swap_request (
     FOREIGN KEY (current_section_id) REFERENCES course_section(id),
     FOREIGN KEY (desired_section_id) REFERENCES course_section(id),
     FOREIGN KEY (group_id) REFERENCES swap_group(id),
-    -- The matching engine loads one course's active requests on every suggestion lookup.
     INDEX idx_swap_course_status (course_code, status)
 ) ENGINE=InnoDB;
 
@@ -80,7 +77,7 @@ CREATE TABLE IF NOT EXISTS notification (
     is_read     BOOLEAN NOT NULL DEFAULT FALSE,
     created_at  DATETIME NOT NULL,
     FOREIGN KEY (user_id) REFERENCES user(id)
-    -- "read" is a reserved word in MySQL, so the column is is_read
+
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS friendship (
@@ -93,9 +90,7 @@ CREATE TABLE IF NOT EXISTS friendship (
     FOREIGN KEY (addressee_id) REFERENCES user(id)
 ) ENGINE=InnoDB;
 
--- Short-lived signup verification codes. One live code per email, so the email IS the
--- primary key: issuing a new code overwrites the old one instead of piling up rows, and
--- that is what ON DUPLICATE KEY UPDATE in OtpDao relies on. Rows are deleted on verify.
+
 CREATE TABLE IF NOT EXISTS otp (
     email       VARCHAR(120) NOT NULL PRIMARY KEY,
     code        VARCHAR(6) NOT NULL,
