@@ -27,13 +27,15 @@ public class RoutineController {
 
     @GetMapping("/me")
     @Operation(summary = "Get my weekly routine for the current semester")
-    public ResponseEntity<ApiResponse<List<RoutineRowDto>>> getMyRoutine() {
+    // for Weekly routine feature
+    public ResponseEntity<ApiResponse<List<RoutineRowDto>>>    getMyRoutine() {
         List<RoutineRowDto> routine = routineService.buildWeeklyRoutineForCurrentSemester(CurrentUser.id());
         return ResponseEntity.ok(ApiResponse.success(routine));
     }
 
     @GetMapping("/me/status")
     @Operation(summary = "Get my live free/busy status, computed in Asia/Dhaka")
+    //busy or free feature
     public ResponseEntity<ApiResponse<LiveStatusDto>> getMyStatus() {
         LiveStatusDto status = routineService.getLiveStatus(CurrentUser.id());
         return ResponseEntity.ok(ApiResponse.success(status));

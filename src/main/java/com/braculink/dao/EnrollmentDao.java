@@ -51,7 +51,7 @@ public class EnrollmentDao {
         }, keyHolder);
         return keyHolder.getKey().longValue();
     }
-
+    //routine builder
     public List<RoutineEntryDto> findByUserAndSemester(Long userId, Integer semesterSessionId) {
         return jdbcTemplate.query(FIND_BY_USER_AND_SEMESTER_SQL, new RoutineEntryRowMapper(objectMapper),
                 userId, semesterSessionId);
