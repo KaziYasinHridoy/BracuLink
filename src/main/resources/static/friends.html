@@ -71,8 +71,8 @@
       <div id="add-banner" class="banner hidden"></div>
       <form id="add-form" class="row row-md" style="align-items: flex-end;">
         <div class="field" style="flex: 1;">
-          <label for="addressee-id">USER ID</label>
-          <input id="addressee-id" type="number" min="1" placeholder="e.g. 42" autocomplete="off" required />
+          <label for="addressee-student-id">STUDENT ID</label>
+          <input id="addressee-student-id" type="text" placeholder="e.g. 24321232" autocomplete="off" required />
         </div>
         <button type="submit" id="add-submit" class="btn">Add</button>
       </form>
@@ -125,14 +125,14 @@
       event.preventDefault();
       const banner = document.getElementById("add-banner");
       const submitButton = document.getElementById("add-submit");
-      const input = document.getElementById("addressee-id");
+      const input = document.getElementById("addressee-student-id");
       banner.className = "banner hidden";
       submitButton.disabled = true;
 
       try {
         await apiFetch("/api/friends/request", {
           method: "POST",
-          body: JSON.stringify({ addresseeId: Number(input.value) }),
+          body: JSON.stringify({ studentId: input.value.trim() }),
         });
         input.value = "";
         banner.className = "banner banner-success";
@@ -225,7 +225,7 @@
         <thead>
           <tr>
             <th>name</th>
-            <th>id</th>
+            <th>student id</th>
             <th></th>
             <th></th>
           </tr>

@@ -1,5 +1,3 @@
--- Braculink schema — hand-written DDL, no ORM generation.
--- ENGINE=InnoDB everywhere so foreign keys are actually enforced (MyISAM ignores them).
 
 CREATE TABLE IF NOT EXISTS course_section (
     id                   BIGINT AUTO_INCREMENT PRIMARY KEY,

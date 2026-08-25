@@ -25,12 +25,14 @@ public class FriendshipService {
         this.notificationService = notificationService;
     }
 
-    public void sendRequest(Long requesterId, Long addresseeId) {
+    public void sendRequest(Long requesterId, String addresseeStudentId) {
+        User addressee = userDao.findByStudentId(addresseeStudentId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND,
+                        "No student found with ID " + addresseeStudentId));
+        Long addresseeId = addressee.getId();
         if (requesterId.equals(addresseeId)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Cannot send a friend request to yourself");
         }
-        userDao.findById(addresseeId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
         if (friendshipDao.existsBetween(requesterId, addresseeId)) {
             throw new ApiException(HttpStatus.CONFLICT, "A friend request already exists between these users");
         }

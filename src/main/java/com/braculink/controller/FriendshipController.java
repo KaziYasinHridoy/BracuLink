@@ -32,9 +32,9 @@ public class FriendshipController {
     }
 
     @PostMapping("/request")
-    @Operation(summary = "Send a friend request")
+    @Operation(summary = "Send a friend request by student ID")
     public ResponseEntity<ApiResponse<Void>> sendRequest(@Valid @RequestBody FriendRequestDto request) {
-        friendshipService.sendRequest(CurrentUser.id(), request.getAddresseeId());
+        friendshipService.sendRequest(CurrentUser.id(), request.getStudentId());
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Friend request sent", null));
     }
 

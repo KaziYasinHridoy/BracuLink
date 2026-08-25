@@ -1,17 +1,17 @@
 package com.braculink.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 public class FriendRequestDto {
 
-    @NotNull
-    private Long addresseeId;
+    @NotBlank
+    private String studentId;
 
-    public Long getAddresseeId() {
-        return addresseeId;
+    public String getStudentId() {
+        return studentId;
     }
 
-    public void setAddresseeId(Long addresseeId) {
-        this.addresseeId = addresseeId;
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 }

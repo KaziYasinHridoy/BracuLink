@@ -22,14 +22,14 @@ public class EnrollmentService {
         this.enrollmentDao = enrollmentDao;
         this.courseSectionDao = courseSectionDao;
     }
-
+    //EnrollmentResponse-json
     public EnrollmentResponse enroll(Long userId, EnrollmentRequest request) {
         String courseCode = request.getCourseCode().toUpperCase();
 
         Long sectionId = courseSectionDao
                 .findTheorySectionId(courseCode, request.getSectionName(), request.getSemesterSessionId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Section not found"));
-
+        //checking is he enrolled?
         if (enrollmentDao.existsForUserAndCourse(userId, courseCode, request.getSemesterSessionId())) {
             throw new ApiException(HttpStatus.CONFLICT, "Already enrolled in this course this semester");
         }
